@@ -1566,7 +1566,7 @@ function printPatientRecord() {
 </head>
 <body>
     <div class="header">
-        <div class="hospital-name">MediCare Hospital</div>
+        <div class="hospital-name">SMART ER NURSING MANAGEMENT SYSTEM</div>
         <div class="subtitle">Patient Medical Record</div>
         <div class="patient-name">${patient.name}</div>
         <div class="patient-id">ID: ${patient.id}</div>
@@ -1649,9 +1649,9 @@ function printPatientRecord() {
     ` : ''}
     
     <div class="footer">
-        <p><strong>MediCare Hospital</strong> - Confidential Patient Information</p>
+        <p><strong>SMART ER NURSING MANAGEMENT SYSTEM</strong> - Confidential Patient Information</p>
         <p>Printed: ${new Date().toLocaleString()}</p>
-        <p>© 2024 MediCare Hospital. All rights reserved.</p>
+        <p>© 2024 SMART ER NURSING MANAGEMENT SYSTEM. All rights reserved.</p>
     </div>
 </body>
 </html>
