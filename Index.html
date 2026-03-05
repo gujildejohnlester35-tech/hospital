@@ -404,9 +404,15 @@
             <div id="labs-tab" class="ehr-tab-content">
                 <h3>Lab Results & Tests</h3>
                 <div id="labsList" class="ehr-list"></div>
-                <div class="ehr-input-group">
-                    <input type="text" id="labInput" placeholder="Add lab result (e.g., Blood Pressure: 120/80)...">
-                    <button class="ehr-add-btn" onclick="addLabResult()">Add</button>
+                <div class="ehr-input-group" style="flex-direction: column; align-items: stretch; gap: 10px;">
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="text" id="labInput" placeholder="Lab result description (optional)..." style="flex: 1;">
+                        <button class="ehr-add-btn" onclick="addLabResult()">Add Text</button>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="file" id="labImageInput" accept="image/*" style="flex: 1; padding: 8px; border: 2px solid var(--primary); border-radius: 6px; background: var(--card-bg); color: var(--text);">
+                        <button class="ehr-add-btn" onclick="addLabImage()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">📷 Upload Image</button>
+                    </div>
                 </div>
             </div>
 
