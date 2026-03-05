@@ -2605,15 +2605,31 @@ function loadLabsList() {
             const div = document.createElement('div');
             div.className = 'ehr-item';
             const timestamp = item.timestamp ? new Date(item.timestamp).toLocaleString() : 'N/A';
-            div.innerHTML = `
-                <div style="flex: 1;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                        <span style="font-weight: 600;">${item.text || item}</span>
-                        <span style="font-size: 11px; color: var(--text-lighter);">📅 ${timestamp}</span>
+            
+            // Check if it's an image or text
+            if (item.image) {
+                div.innerHTML = `
+                    <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-weight: 600; color: var(--primary);">📷 Lab Image</span>
+                            <span style="font-size: 11px; color: var(--text-lighter);">📅 ${timestamp}</span>
+                        </div>
+                        ${item.text ? `<div style="margin-bottom: 8px; color: var(--text-light);">${item.text}</div>` : ''}
+                        <img src="${item.image}" alt="Lab Result" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 2px solid var(--primary); cursor: pointer;" onclick="viewLabImage('${item.image}', '${item.text || 'Lab Result'}')">
                     </div>
-                </div>
-                <button onclick="removeLabResult(${idx})" class="remove-btn">✕</button>
-            `;
+                    <button onclick="removeLabResult(${idx})" class="remove-btn">✕</button>
+                `;
+            } else {
+                div.innerHTML = `
+                    <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <span style="font-weight: 600;">${item.text || item}</span>
+                            <span style="font-size: 11px; color: var(--text-lighter);">📅 ${timestamp}</span>
+                        </div>
+                    </div>
+                    <button onclick="removeLabResult(${idx})" class="remove-btn">✕</button>
+                `;
+            }
             list.appendChild(div);
         });
     }
@@ -2635,10 +2651,89 @@ function addLabResult() {
     }
 }
 
+function addLabImage() {
+    const fileInput = document.getElementById('labImageInput');
+    const textInput = document.getElementById('labInput');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Please select an image file');
+        return;
+    }
+    
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        alert('Image file is too large. Maximum size is 5MB.');
+        return;
+    }
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+        alert('Please select a valid image file');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const entry = {
+            text: textInput.value.trim() || 'Lab Result Image',
+            image: e.target.result,
+            timestamp: new Date().toISOString(),
+            addedBy: currentUser ? currentUser.username : 'Unknown'
+        };
+        patients[currentPatientIndex].labs.push(entry);
+        localStorage.setItem('patients', JSON.stringify(patients));
+        fileInput.value = '';
+        textInput.value = '';
+        loadLabsList();
+    };
+    reader.readAsDataURL(file);
+}
+
+function viewLabImage(imageSrc, description) {
+    // Create modal to view full image
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;';
+    
+    modal.innerHTML = `
+        <div style="position: relative; max-width: 90%; max-height: 90%; display: flex; flex-direction: column; align-items: center;">
+            <div style="background: white; padding: 15px; border-radius: 8px 8px 0 0; width: 100%; text-align: center;">
+                <h3 style="margin: 0; color: #333;">${description}</h3>
+            </div>
+            <img src="${imageSrc}" style="max-width: 100%; max-height: 70vh; border-radius: 0 0 8px 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+            <button onclick="this.parentElement.parentElement.remove()" style="position: absolute; top: -10px; right: -10px; background: #ff4444; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 24px; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">×</button>
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                <button onclick="downloadLabImage('${imageSrc}', '${description}')" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">📥 Download</button>
+                <button onclick="this.parentElement.parentElement.parentElement.remove()" style="padding: 10px 20px; background: #666; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Close</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Close on background click
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
+
+function downloadLabImage(imageSrc, description) {
+    const link = document.createElement('a');
+    link.href = imageSrc;
+    link.download = `${description.replace(/[^a-z0-9]/gi, '_')}_${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
 function removeLabResult(idx) {
-    patients[currentPatientIndex].labs.splice(idx, 1);
-    localStorage.setItem('patients', JSON.stringify(patients));
-    loadLabsList();
+    if (confirm('Are you sure you want to remove this lab result?')) {
+        patients[currentPatientIndex].labs.splice(idx, 1);
+        localStorage.setItem('patients', JSON.stringify(patients));
+        loadLabsList();
+    }
 }
 
 function loadNotes() {
@@ -5232,98 +5327,3 @@ function getESIBadge(esiLevel) {
     return `<span class="esi-badge ${badgeClass}">${esiLevel}</span>`;
 }
 
-
-// ==================== DATABASE MANAGEMENT FUNCTIONS ====================
-
-// Open database management modal
-function openDatabaseManagement() {
-    // Check if user is owner
-    if (!isOwner()) {
-        alert('⚠️ Access Denied\n\nDatabase management is restricted to Owner/Administrator accounts only.\n\nPlease contact your system administrator for access.');
-        return;
-    }
-    
-    const modal = document.getElementById('databaseModal');
-    if (modal) {
-        modal.style.display = 'block';
-    }
-}
-
-// Close database management modal
-function closeDatabaseModal() {
-    const modal = document.getElementById('databaseModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-}
-
-// View all users in the system
-async function viewAllUsers() {
-    try {
-        const users = await getAllUsersDB();
-        
-        if (users.length === 0) {
-            alert('No users found in the database.');
-            return;
-        }
-        
-        let userList = '👥 ALL REGISTERED USERS\n\n';
-        users.forEach((user, index) => {
-            userList += `${index + 1}. ${user.username}\n`;
-            userList += `   Role: ${user.role}\n`;
-            userList += `   Email: ${user.email || 'N/A'}\n`;
-            userList += `   Full Name: ${user.fullName || 'N/A'}\n`;
-            userList += `   Created: ${user.createdAt ? new Date(user.createdAt).toLocaleString() : 'N/A'}\n`;
-            userList += `   Last Login: ${user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}\n`;
-            userList += `   Status: ${user.isActive ? '✅ Active' : '❌ Inactive'}\n\n`;
-        });
-        
-        alert(userList);
-    } catch (error) {
-        console.error('Error viewing users:', error);
-        alert('Error loading users: ' + error.message);
-    }
-}
-
-// Close database modal when clicking outside
-window.addEventListener('click', function(event) {
-    const modal = document.getElementById('databaseModal');
-    if (modal && event.target === modal) {
-        modal.style.display = 'none';
-    }
-});
-
-
-// ==================== COMMITTEE STRUCTURE FUNCTIONS ====================
-
-// Open committee structure modal
-function openCommitteeStructure() {
-    const modal = document.getElementById('committeeModal');
-    if (modal) {
-        modal.style.display = 'block';
-    }
-}
-
-// Close committee structure modal
-function closeCommitteeModal() {
-    const modal = document.getElementById('committeeModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-}
-
-// Close committee modal when clicking outside
-window.addEventListener('click', function(event) {
-    const modal = document.getElementById('committeeModal');
-    if (modal && event.target === modal) {
-        modal.style.display = 'none';
-    }
-});
-
-
-// Initialize login system when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    initializeLoginSystem();
-    checkLoginStatus();
-});
-}
