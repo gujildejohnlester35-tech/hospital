@@ -5327,3 +5327,98 @@ function getESIBadge(esiLevel) {
     return `<span class="esi-badge ${badgeClass}">${esiLevel}</span>`;
 }
 
+
+// ==================== DATABASE MANAGEMENT FUNCTIONS ====================
+
+// Open database management modal
+function openDatabaseManagement() {
+    // Check if user is owner
+    if (!isOwner()) {
+        alert('⚠️ Access Denied\n\nDatabase management is restricted to Owner/Administrator accounts only.\n\nPlease contact your system administrator for access.');
+        return;
+    }
+    
+    const modal = document.getElementById('databaseModal');
+    if (modal) {
+        modal.style.display = 'block';
+    }
+}
+
+// Close database management modal
+function closeDatabaseModal() {
+    const modal = document.getElementById('databaseModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// View all users in the system
+async function viewAllUsers() {
+    try {
+        const users = await getAllUsersDB();
+        
+        if (users.length === 0) {
+            alert('No users found in the database.');
+            return;
+        }
+        
+        let userList = '👥 ALL REGISTERED USERS\n\n';
+        users.forEach((user, index) => {
+            userList += `${index + 1}. ${user.username}\n`;
+            userList += `   Role: ${user.role}\n`;
+            userList += `   Email: ${user.email || 'N/A'}\n`;
+            userList += `   Full Name: ${user.fullName || 'N/A'}\n`;
+            userList += `   Created: ${user.createdAt ? new Date(user.createdAt).toLocaleString() : 'N/A'}\n`;
+            userList += `   Last Login: ${user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}\n`;
+            userList += `   Status: ${user.isActive ? '✅ Active' : '❌ Inactive'}\n\n`;
+        });
+        
+        alert(userList);
+    } catch (error) {
+        console.error('Error viewing users:', error);
+        alert('Error loading users: ' + error.message);
+    }
+}
+
+// Close database modal when clicking outside
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('databaseModal');
+    if (modal && event.target === modal) {
+        modal.style.display = 'none';
+    }
+});
+
+
+// ==================== COMMITTEE STRUCTURE FUNCTIONS ====================
+
+// Open committee structure modal
+function openCommitteeStructure() {
+    const modal = document.getElementById('committeeModal');
+    if (modal) {
+        modal.style.display = 'block';
+    }
+}
+
+// Close committee structure modal
+function closeCommitteeModal() {
+    const modal = document.getElementById('committeeModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Close committee modal when clicking outside
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('committeeModal');
+    if (modal && event.target === modal) {
+        modal.style.display = 'none';
+    }
+});
+
+
+// Initialize login system when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initializeLoginSystem();
+    checkLoginStatus();
+});
+}
